@@ -6,7 +6,8 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
 
@@ -16,14 +17,21 @@
     '';
   };
 
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+
+
+  # disable system-boot and enable grub, since it supports uefi and bios
+  boot.loader.systemd-boot.enable = false;
+  boot.loader.efi.canTouchEfiVariables = false;
+  boot.loader.grub = {
+    enable = true;
+    efiSupport = true;
+    efiInstallAsRemovable = true;
+  };
 
   networking.hostName = "nixos-portable"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+  networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.
 
   # Set your time zone.
   time.timeZone = "America/Sao_Paulo";
@@ -33,10 +41,9 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "rn_US.UTF-8";
+  i18n.defaultLocale = "en_US.UTF-8";
   console = {
     font = "Lat2-Terminus16";
-    keyMap = "br";
     useXkbConfig = true; # use xkb.options in tty.
   };
 
@@ -60,11 +67,6 @@
 
   # Enable sound.
   hardware.pulseaudio.enable = true;
-  # OR
-  # services.pipewire = {
-  #   enable = true;
-  #   pulse.enable = true;
-  # };
 
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
@@ -72,30 +74,73 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.henrique = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "docker" ]; # Enable ‘sudo’ for the user.
-    packages = with pkgs; [
-      firefox
-      tree
+    extraGroups = [ 
+      "wheel"  # Enable ‘sudo’ for the user.
+      "docker" # Run docker commands without sudo
     ];
+    initialHashedPassword = "$y$j9T$S8obpUciAN50CoJeXA.ow/$DNB2Kfklz2Jx8m60BN/iwAXoBzhNh5SlKcB4kMa51z6";
+    shell = pkgs.zsh;
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    firefox
+
+    # basic cli tools
     wget
+    tmux
+    gnumake
+    gh # github cli
+    maven
+    jq
+    tree
+
+    # Zig stuff
+    zigpkgs.master
+    zls
+
+    # kids toys
+    (python312.withPackages (ps: with ps; [
+      pandas
+      numpy
+      ipython
+      matplotlib
+      seaborn
+      jupyterlab
+      pudb
+      torch
+      scikit-learn
+    ]))
+    poetry
+
   ];
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
   programs = {
+    # Some programs need SUID wrappers, can be configured further or are
+    # started in user sessions.
     mtr.enable = true;
+
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
     };
+
     zsh.enable = true;
+
     neovim.enable = true;
+
+    git = {
+      enable = true;
+      lfs.enable = true;
+    };
+
+    java.enable = true;
+
+    tmux = {
+      enable = true;
+      escapeTime = 0;
+    };
   };
 
   # List services that you want to enable:
@@ -112,11 +157,6 @@
   virtualisation = {
     docker.enable = true;
   };
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  system.copySystemConfiguration = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.

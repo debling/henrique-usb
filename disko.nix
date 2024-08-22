@@ -34,9 +34,10 @@
                   format = "f2fs";
                   mountpoint = "/";
                   mountOptions = [
-                    # "compress_algorithm=zstd:6"
-                    # "compress_chksum"
-                    "atgc" "gc_merge"
+                    "compress_algorithm=zstd:6"
+                    "compress_chksum"
+                    "atgc"
+                    "gc_merge"
                     "lazytime"
                   ];
                 };
